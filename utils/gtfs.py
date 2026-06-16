@@ -2,7 +2,6 @@ import httpx
 from google.transit import gtfs_realtime_pb2
 from datetime import datetime
 
-# Map each line to its GTFS-RT feed URL
 FEED_URLS = {
     "A": "https://api-endpoint.mta.info/Dataservice/mtagtfsfeeds/nyct%2Fgtfs-ace",
     "C": "https://api-endpoint.mta.info/Dataservice/mtagtfsfeeds/nyct%2Fgtfs-ace",
@@ -65,20 +64,19 @@ async def fetch_departures(station_id: str, lines: list[str]) -> dict:
 
                     trip = entity.trip_update
                     route_id = trip.trip.route_id
-                    direction = trip.trip.Extensions[
-                        gtfs_realtime_pb2.nyct_trip_descriptor
-                    ].direction if trip.trip.HasExtension(
-                        gtfs_realtime_pb2.nyct_trip_descriptor
-                    ) else None
 
                     for stop_time in trip.stop_time_update:
-                        # Station IDs in GTFS have N/S suffix e.g. "127N", "127S"
                         stop_id = stop_time.stop_id
+
+                        # Match station — GTFS stop IDs have N/S suffix e.g. "127N", "127S"
                         if not stop_id.startswith(station_id):
                             continue
 
+                        # Prefer arrival time, fall back to departure time
                         arrival = stop_time.arrival.time or stop_time.departure.time
-                        if arrival < now:
+
+                        # Skip if no valid time or train has already passed
+                        if not arrival or arrival < now:
                             continue
 
                         minutes = round((arrival - now) / 60)
@@ -93,7 +91,6 @@ async def fetch_departures(station_id: str, lines: list[str]) -> dict:
                 print(f"Error fetching feed {url}: {e}")
                 continue
 
-    # Sort by soonest and take the next one in each direction
     northbound.sort(key=lambda x: x["minutes"])
     southbound.sort(key=lambda x: x["minutes"])
 

@@ -18,3 +18,7 @@ build/
 # OS
 .DS_Store
 Thumbs.db
+
+generate_bus_stops.py
+stations.csv
+convert_stations.py
