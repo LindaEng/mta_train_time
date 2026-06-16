@@ -2,7 +2,7 @@ import os
 import httpx
 from datetime import datetime, timezone
 
-BUS_API_URL = "http://bustime.mta.info/api/siri/stop-monitoring.json"
+BUS_API_URL = "https://bustime.mta.info/api/siri/stop-monitoring.json"
 
 
 async def fetch_bus_departures(stop_id: str) -> dict:

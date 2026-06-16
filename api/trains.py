@@ -1,4 +1,4 @@
-from fastapi import FastAPI, HTTPException, Request
+from fastapi import FastAPI, HTTPException, Query, Request
 from utils.haversine import find_nearest_station
 from utils.gtfs import fetch_departures
 import json
@@ -29,16 +29,26 @@ async def geolocate_ip(ip: str) -> tuple[float, float]:
 
 
 @app.get("/api/trains")
-async def get_trains(request: Request, station: str | None = None):
+async def get_trains(
+    request: Request,
+    station: str | None = None,
+    lat: float | None = Query(None),
+    lon: float | None = Query(None),
+):
     if station is not None:
         matches = [s for s in STATIONS if s["id"] == station]
         if not matches:
             raise HTTPException(status_code=404, detail=f"Station {station} not found")
         found = matches[0]
-    else:
-        ip = request.client.host if request.client else "127.0.0.1"
-        lat, lon = await geolocate_ip(ip)
+    elif lat is not None and lon is not None:
         found = find_nearest_station(lat, lon, STATIONS)
+        if found is None:
+            return {"station": None, "uptown": None, "downtown": None}
+    else:
+        forwarded = request.headers.get("x-forwarded-for", "")
+        ip = forwarded.split(",")[0].strip() or (request.client.host if request.client else "127.0.0.1")
+        lat2, lon2 = await geolocate_ip(ip)
+        found = find_nearest_station(lat2, lon2, STATIONS)
         if found is None:
             return {"station": None, "uptown": None, "downtown": None}
 
