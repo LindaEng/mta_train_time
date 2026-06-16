@@ -22,3 +22,6 @@ Thumbs.db
 generate_bus_stops.py
 stations.csv
 convert_stations.py
+
+gtfs_static/
+google_transit.zip
