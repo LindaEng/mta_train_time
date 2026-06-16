@@ -1,4 +1,4 @@
-from fastapi import FastAPI, Request
+from fastapi import FastAPI, HTTPException, Request
 from utils.haversine import find_nearest_station
 from utils.bus import fetch_bus_departures
 import json
@@ -31,21 +31,26 @@ async def geolocate_ip(ip: str) -> tuple[float, float]:
 
 
 @app.get("/api/buses")
-async def get_buses(request: Request):
-    if not BUS_STOPS:
+async def get_buses(request: Request, stop: str | None = None):
+    if not BUS_STOPS and stop is None:
         return {"stop": None, "inbound": None, "outbound": None}
 
-    ip = request.client.host if request.client else "127.0.0.1"
-    lat, lon = await geolocate_ip(ip)
+    if stop is not None:
+        matches = [s for s in BUS_STOPS if s["id"] == stop]
+        if not matches:
+            raise HTTPException(status_code=404, detail=f"Stop {stop} not found")
+        found = matches[0]
+    else:
+        ip = request.client.host if request.client else "127.0.0.1"
+        lat, lon = await geolocate_ip(ip)
+        found = find_nearest_station(lat, lon, BUS_STOPS)
+        if found is None:
+            return {"stop": None, "inbound": None, "outbound": None}
 
-    stop = find_nearest_station(lat, lon, BUS_STOPS)
-    if stop is None:
-        return {"stop": None, "inbound": None, "outbound": None}
-
-    departures = await fetch_bus_departures(stop["id"])
+    departures = await fetch_bus_departures(found["id"])
 
     return {
-        "stop": stop["name"],
+        "stop": found["name"],
         "inbound": departures["inbound"],
         "outbound": departures["outbound"],
     }
