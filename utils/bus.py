@@ -70,6 +70,6 @@ async def fetch_bus_departures(stop_id: str) -> dict:
     outbound.sort(key=lambda x: x["minutes"])
 
     return {
-        "inbound": inbound[0] if inbound else None,
-        "outbound": outbound[0] if outbound else None,
+        "inbound": inbound[:3] if inbound else [],
+        "outbound": outbound[:3] if outbound else [],
     }

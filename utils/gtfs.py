@@ -1,3 +1,4 @@
+import os
 import httpx
 from google.transit import gtfs_realtime_pb2
 from datetime import datetime
@@ -49,10 +50,13 @@ async def fetch_departures(station_id: str, lines: list[str]) -> dict:
     northbound = []
     southbound = []
 
+    mta_key = os.environ.get("MTA_BUS_API_KEY", "")
+    headers = {"x-api-key": mta_key} if mta_key else {}
+
     async with httpx.AsyncClient() as client:
         for url in feed_urls:
             try:
-                response = await client.get(url, timeout=10.0)
+                response = await client.get(url, headers=headers, timeout=10.0)
                 response.raise_for_status()
 
                 feed = gtfs_realtime_pb2.FeedMessage()
@@ -95,6 +99,6 @@ async def fetch_departures(station_id: str, lines: list[str]) -> dict:
     southbound.sort(key=lambda x: x["minutes"])
 
     return {
-        "uptown": northbound[0] if northbound else None,
-        "downtown": southbound[0] if southbound else None,
+        "uptown": northbound[:3] if northbound else [],
+        "downtown": southbound[:3] if southbound else [],
     }
