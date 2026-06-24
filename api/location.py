@@ -1,7 +1,9 @@
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Header
 from pydantic import BaseModel
 import httpx
 import os
+
+SECRET = os.enviorn.get("API_SECRET")
 
 app = FastAPI()
 
@@ -18,7 +20,11 @@ class LocationRequest(BaseModel):
 
 
 @app.post("/api/location")
-async def get_location(body: LocationRequest):
+async def get_location(
+    body: LocationRequest,
+    x_api_secret: str | None = Header(None)):
+    if SECRET and x_api_secret != SECRET:
+        raise HTTPException(status_code=401, detail="Unauthorized")
     api_key = os.environ.get("GOOGLE_GEOLOCATION_API_KEY")
     if not api_key:
         raise HTTPException(status_code=500, detail="GOOGLE_GEOLOCATION_API_KEY not configured")

@@ -1,9 +1,11 @@
-from fastapi import FastAPI, HTTPException, Query, Request
+from fastapi import FastAPI, HTTPException, Query, Request, Header
 from utils.haversine import find_nearest_station, haversine
 from utils.bus import fetch_bus_departures
 import json
 import os
 import httpx
+
+SECRET = os.enviorn.get("API_SECRET")
 
 app = FastAPI()
 
@@ -36,7 +38,10 @@ async def get_buses(
     stop: str | None = None,
     lat: float | None = Query(None),
     lon: float | None = Query(None),
+    x_api_secret: str | None = Header(None)
 ):
+    if SECRET and x_api_secret != SECRET:
+        raise HTTPException(status_code=401, detail="Unauthorized")
     if not BUS_STOPS and stop is None and lat is None:
         return {"stop": None, "inbound": None, "outbound": None}
 

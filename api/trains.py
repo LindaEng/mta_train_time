@@ -1,9 +1,11 @@
-from fastapi import FastAPI, HTTPException, Query, Request
+from fastapi import FastAPI, HTTPException, Query, Request, Header
 from utils.haversine import find_nearest_station
 from utils.gtfs import fetch_departures
 import json
 import os
 import httpx
+
+SECRET = os.enviorn.get("API_SECRET")
 
 app = FastAPI()
 
@@ -34,7 +36,10 @@ async def get_trains(
     station: str | None = None,
     lat: float | None = Query(None),
     lon: float | None = Query(None),
+    x_api_secret: str | None = Header(None)
 ):
+    if SECRET and x_api_secret != SECRET:
+        raise HTTPException(status_code=401, detail="Unauthorized")
     if station is not None:
         matches = [s for s in STATIONS if s["id"] == station]
         if not matches:
