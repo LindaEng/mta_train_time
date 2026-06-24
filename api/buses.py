@@ -57,7 +57,14 @@ async def get_buses(
         if found is None:
             return {"stop": None, "inbound": None, "outbound": None}
 
-    departures = await fetch_bus_departures(found["id"])
+    found_routes = set(found.get("routes", []))
+    paired = [
+        s for s in BUS_STOPS
+        if s["name"] == found["name"]
+        and set(s.get("routes", [])).intersection(found_routes)
+    ]
+    paired_ids = [s["id"] for s in paired]
+    departures = await fetch_bus_departures(paired_ids)
 
     return {
         "stop": found["name"],
