@@ -61,7 +61,7 @@ async def get_buses(
     paired_ids = [
         s["id"] for s in BUS_STOPS
         if set(s.get("routes", [])).intersection(found_routes)
-        and haversine(found["lat"], found["lon"], s["lat"], s["lon"]) <= 0.15
+        and haversine(found["lat"], found["lon"], s["lat"], s["lon"]) <= 0.50
     ]
     departures = await fetch_bus_departures(paired_ids)
 
