@@ -31,7 +31,12 @@ async def _fetch_single_stop(client: httpx.AsyncClient, stop_id: str, api_key: s
         route = journey.get("PublishedLineName", "")
         direction_ref = journey.get("DirectionRef", "")
 
-        arrival = journey.get("MonitoredCall", {}).get("ExpectedArrivalTime", "")
+        monitored_call = journey.get("MonitoredCall", {})
+        arrival = (
+            monitored_call.get("ExpectedArrivalTime")
+            or monitored_call.get("AimedArrivalTime")
+            or ""
+        )
         if not arrival:
             continue
 
@@ -74,6 +79,6 @@ async def fetch_bus_departures(stop_ids: list[str]) -> dict:
     outbound.sort(key=lambda x: x["minutes"])
 
     return {
-        "inbound": inbound[0] if inbound else None,
-        "outbound": outbound[0] if outbound else None,
+        "inbound": inbound[:3] if inbound else [],
+        "outbound": outbound[:3] if outbound else [],
     }
