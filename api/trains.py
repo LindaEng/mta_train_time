@@ -5,7 +5,7 @@ import json
 import os
 import httpx
 
-SECRET = os.enviorn.get("API_SECRET")
+SECRET = os.environ.get("API_SECRET")
 
 app = FastAPI()
 

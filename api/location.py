@@ -3,7 +3,7 @@ from pydantic import BaseModel
 import httpx
 import os
 
-SECRET = os.enviorn.get("API_SECRET")
+SECRET = os.environ.get("API_SECRET")
 
 app = FastAPI()
 
