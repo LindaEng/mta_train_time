@@ -1,5 +1,5 @@
 from fastapi import FastAPI, HTTPException, Query, Request
-from utils.haversine import find_nearest_station
+from utils.haversine import find_nearest_station, haversine
 from utils.bus import fetch_bus_departures
 import json
 import os
@@ -58,12 +58,11 @@ async def get_buses(
             return {"stop": None, "inbound": None, "outbound": None}
 
     found_routes = set(found.get("routes", []))
-    paired = [
-        s for s in BUS_STOPS
-        if s["name"] == found["name"]
-        and set(s.get("routes", [])).intersection(found_routes)
+    paired_ids = [
+        s["id"] for s in BUS_STOPS
+        if set(s.get("routes", [])).intersection(found_routes)
+        and haversine(found["lat"], found["lon"], s["lat"], s["lon"]) <= 0.15
     ]
-    paired_ids = [s["id"] for s in paired]
     departures = await fetch_bus_departures(paired_ids)
 
     return {
